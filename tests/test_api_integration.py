@@ -274,7 +274,7 @@ def test_delete_url_not_found(client):
     assert rv.status_code == 404
 
 
-# ── Events ─────────────────────────────────────────────────────────────────────
+# ── Events — GET ───────────────────────────────────────────────────────────────
 
 
 def test_list_events_returns_list(client):
@@ -283,12 +283,41 @@ def test_list_events_returns_list(client):
     assert isinstance(rv.get_json(), list)
 
 
+def test_list_events_has_expected_fields(client):
+    rv = client.get(f"/events?url_id={TEST_URL_ID}")
+    assert rv.status_code == 200
+    rows = rv.get_json()
+    assert len(rows) > 0
+    row = rows[0]
+    for field in ("id", "url_id", "user_id", "event_type", "timestamp", "details"):
+        assert field in row, f"missing field: {field}"
+
+
 def test_list_events_filter_by_url(client):
     rv = client.get(f"/events?url_id={TEST_URL_ID}")
     assert rv.status_code == 200
     rows = rv.get_json()
     assert isinstance(rows, list)
     assert any(r["id"] == TEST_EVENT_ID for r in rows)
+    assert all(r["url_id"] == TEST_URL_ID for r in rows)
+
+
+def test_list_events_filter_by_user(client):
+    rv = client.get(f"/events?user_id={TEST_USER_ID}")
+    assert rv.status_code == 200
+    rows = rv.get_json()
+    assert isinstance(rows, list)
+    assert any(r["id"] == TEST_EVENT_ID for r in rows)
+    assert all(r["user_id"] == TEST_USER_ID for r in rows)
+
+
+def test_list_events_filter_by_event_type(client):
+    rv = client.get("/events?event_type=click")
+    assert rv.status_code == 200
+    rows = rv.get_json()
+    assert isinstance(rows, list)
+    assert any(r["id"] == TEST_EVENT_ID for r in rows)
+    assert all(r["event_type"] == "click" for r in rows)
 
 
 def test_list_events_filter_unknown_url(client):
@@ -297,12 +326,146 @@ def test_list_events_filter_unknown_url(client):
     assert rv.get_json() == []
 
 
+def test_list_events_filter_unknown_user(client):
+    rv = client.get("/events?user_id=99999999")
+    assert rv.status_code == 200
+    assert rv.get_json() == []
+
+
+def test_list_events_filter_unknown_event_type(client):
+    rv = client.get("/events?event_type=nonexistent_type")
+    assert rv.status_code == 200
+    assert rv.get_json() == []
+
+
+def test_list_events_combined_filters(client):
+    """url_id + event_type combined must AND the filters."""
+    rv = client.get(f"/events?url_id={TEST_URL_ID}&event_type=click")
+    assert rv.status_code == 200
+    rows = rv.get_json()
+    assert all(r["url_id"] == TEST_URL_ID and r["event_type"] == "click" for r in rows)
+
+
+def test_list_events_limit(client):
+    rv = client.get("/events?limit=1")
+    assert rv.status_code == 200
+    assert len(rv.get_json()) <= 1
+
+
+# ── Events — POST ──────────────────────────────────────────────────────────────
+
+
+def test_create_event_success(client):
+    rv = client.post("/events", json={
+        "event_type": "click",
+        "url_id": TEST_URL_ID,
+        "user_id": TEST_USER_ID,
+        "details": {"referrer": "https://google.com"},
+    })
+    assert rv.status_code == 201
+    data = rv.get_json()
+    assert data["event_type"] == "click"
+    assert data["url_id"] == TEST_URL_ID
+    assert data["user_id"] == TEST_USER_ID
+    assert data["details"] == {"referrer": "https://google.com"}
+    assert "id" in data
+    assert "timestamp" in data
+    # cleanup
+    from app.models import Event
+    Event.delete().where(Event.id == data["id"]).execute()
+
+
+def test_create_event_missing_event_type(client):
+    rv = client.post("/events", json={
+        "url_id": TEST_URL_ID,
+        "user_id": TEST_USER_ID,
+    })
+    assert rv.status_code == 400
+
+
+def test_create_event_missing_url_id(client):
+    rv = client.post("/events", json={
+        "event_type": "click",
+        "user_id": TEST_USER_ID,
+    })
+    assert rv.status_code == 400
+
+
+def test_create_event_missing_user_id(client):
+    rv = client.post("/events", json={
+        "event_type": "click",
+        "url_id": TEST_URL_ID,
+    })
+    assert rv.status_code == 400
+
+
+def test_create_event_url_not_found(client):
+    rv = client.post("/events", json={
+        "event_type": "click",
+        "url_id": 99999999,
+        "user_id": TEST_USER_ID,
+    })
+    assert rv.status_code == 404
+
+
+def test_create_event_user_not_found(client):
+    rv = client.post("/events", json={
+        "event_type": "click",
+        "url_id": TEST_URL_ID,
+        "user_id": 99999999,
+    })
+    assert rv.status_code == 404
+
+
+def test_create_event_bad_url_id(client):
+    rv = client.post("/events", json={
+        "event_type": "click",
+        "url_id": "not-an-int",
+        "user_id": TEST_USER_ID,
+    })
+    assert rv.status_code == 400
+
+
+def test_create_event_details_as_string(client):
+    """details can be sent as a plain string."""
+    rv = client.post("/events", json={
+        "event_type": "view",
+        "url_id": TEST_URL_ID,
+        "user_id": TEST_USER_ID,
+        "details": '{"source": "email"}',
+    })
+    assert rv.status_code == 201
+    from app.models import Event
+    Event.delete().where(Event.id == rv.get_json()["id"]).execute()
+
+
+def test_create_event_without_details(client):
+    """details is optional — should default to empty object."""
+    rv = client.post("/events", json={
+        "event_type": "view",
+        "url_id": TEST_URL_ID,
+        "user_id": TEST_USER_ID,
+    })
+    assert rv.status_code == 201
+    data = rv.get_json()
+    assert data["details"] is not None
+    from app.models import Event
+    Event.delete().where(Event.id == data["id"]).execute()
+
+
 # ── Redirect ───────────────────────────────────────────────────────────────────
 
 
 def test_redirect_follows_short_code(client):
     rv = client.get(f"/s/{TEST_SHORT_CODE}")
     # Flask test client doesn't follow redirects by default
+    assert rv.status_code == 302
+    assert "example.com" in rv.headers["Location"]
+
+
+def test_redirect_urls_path_mlh(client):
+    """MLH automated test: GET /urls/<short_code>/redirect (not only /s/<code>)."""
+    rv = client.get(f"/urls/{TEST_SHORT_CODE}/redirect")
     assert rv.status_code == 302
     assert "example.com" in rv.headers["Location"]
 

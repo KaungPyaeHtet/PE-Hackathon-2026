@@ -99,6 +99,27 @@ def _is_valid_url(url: str) -> bool:
         return False
 
 
+def _redirect_response_for_short_code(short_code: str, *, log_name: str):
+    """302 to original_url; 404 missing/invalid; 410 inactive. Used by /s/<code> and /urls/<code>/redirect."""
+    code = short_code.strip()
+    if len(code) > 32:
+        abort(404)
+    try:
+        row = Url.get(Url.short_code == code)
+    except Url.DoesNotExist:
+        abort(404)
+    if not row.is_active:
+        log.warning("redirect_inactive", extra={"short_code": code, "url_id": row.id, "via": log_name})
+        return jsonify(error="gone", reason="inactive"), 410
+    if not _is_valid_url(row.original_url):
+        abort(404)
+    log.info(
+        "redirect",
+        extra={"short_code": code, "url_id": row.id, "destination": row.original_url, "via": log_name},
+    )
+    return redirect(row.original_url, code=302)
+
+
 # MLH automated tests expect /users, /urls, /events (no /api prefix).
 api_bp = Blueprint("api", __name__)
 
@@ -298,6 +319,12 @@ def create_url():
     return jsonify(url_dict(row)), 201
 
 
+@api_bp.route("/urls/<string:short_code>/redirect", methods=["GET"])
+def redirect_by_short_code(short_code: str):
+    """MLH: GET /urls/<short_code>/redirect → 302 Location: original_url (allow_redirects: false)."""
+    return _redirect_response_for_short_code(short_code, log_name="urls_redirect")
+
+
 @api_bp.route("/urls/<int:url_id>", methods=["GET"])
 def get_url(url_id: int):
     try:
@@ -424,16 +451,4 @@ short_bp = Blueprint("short", __name__)
 
 @short_bp.route("/s/<short_code>")
 def redirect_short(short_code: str):
-    if len(short_code) > 32:
-        abort(404)
-    try:
-        row = Url.get(Url.short_code == short_code.strip())
-    except Url.DoesNotExist:
-        abort(404)
-    if not row.is_active:
-        log.warning("redirect_inactive", extra={"short_code": short_code, "url_id": row.id})
-        return jsonify(error="gone", reason="inactive"), 410
-    if not _is_valid_url(row.original_url):
-        abort(404)
-    log.info("redirect", extra={"short_code": short_code, "url_id": row.id, "destination": row.original_url})
-    return redirect(row.original_url, code=302)
+    return _redirect_response_for_short_code(short_code, log_name="s_prefix")

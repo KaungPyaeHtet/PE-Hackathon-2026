@@ -91,3 +91,33 @@
 {"asctime": "2026-04-05 16:14:37,582", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
 {"asctime": "2026-04-05 16:14:37,592", "levelname": "INFO", "name": "app", "message": "request", "method": "POST", "path": "/events", "remote_addr": "127.0.0.1"}
 {"asctime": "2026-04-05 16:14:37,594", "levelname": "INFO", "name": "app", "message": "response", "method": "POST", "path": "/events", "status": 201}
+{"asctime": "2026-04-05 16:19:20,961", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:19:21,029", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:20:46,159", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:20:46,231", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:20:54,624", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:20:54,691", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:21:01,013", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:21:01,075", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:21:07,498", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:21:07,564", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:21:17,985", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:21:18,051", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:21:51,011", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:21:51,070", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:22:55,652", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:22:55,717", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:23:56,604", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:23:56,681", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:23:59,911", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:23:59,978", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:24:02,194", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:24:02,264", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:24:10,661", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:24:10,724", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:24:16,017", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:24:16,074", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:28:19,125", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:28:19,192", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:29:28,445", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:29:28,518", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}

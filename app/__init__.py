@@ -88,7 +88,8 @@ def create_app():
                 "url_update": "PUT /urls/<id>",
                 "url_delete": "DELETE /urls/<id>",
                 "events": "GET /events",
-                "redirect": "GET /s/<short_code>",
+                "redirect_s": "GET /s/<short_code>",
+                "redirect_urls": "GET /urls/<short_code>/redirect",
             },
         )
 
