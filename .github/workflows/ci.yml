@@ -41,5 +41,17 @@ jobs:
       - name: Sync dependencies
         run: uv sync --group dev
 
-      - name: Run tests
-        run: uv run pytest -v
+      - name: Run tests with coverage
+        run: |
+          uv run pytest -v \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=50
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml

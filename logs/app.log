@@ -1,0 +1,13 @@
+{"asctime": "2026-04-05 15:37:19,527", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 15:37:19,577", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/metrics", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 15:37:19,683", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/metrics", "status": 200}
+{"asctime": "2026-04-05 15:37:19,713", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/logs", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 15:37:19,713", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/logs", "status": 200}
+{"asctime": "2026-04-05 15:40:38,962", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 15:40:39,012", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/health", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 15:40:39,013", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/health", "status": 200}
+{"asctime": "2026-04-05 15:40:39,027", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/metrics", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 15:40:39,135", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/metrics", "status": 200}
+{"asctime": "2026-04-05 15:40:39,218", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/notfound-404", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 15:40:39,218", "levelname": "WARNING", "name": "app", "message": "not_found", "path": "/notfound-404"}
+{"asctime": "2026-04-05 15:40:39,219", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/notfound-404", "status": 404}
