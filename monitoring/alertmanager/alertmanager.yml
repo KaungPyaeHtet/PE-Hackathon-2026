@@ -19,18 +19,18 @@ route:
 receivers:
   - name: "discord"
     discord_configs:
-      # URL is written to this path at container start from DISCORD_WEBHOOK_URL
-      # (Alertmanager does not expand environment variables inside YAML).
-      - webhook_url_file: /tmp/discord_webhook_url
+      - send_resolved: true
+        # Runtime value is injected by docker-entrypoint.sh before Alertmanager starts.
+        webhook_url: "__DISCORD_WEBHOOK_URL__"
         title: >-
-          {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }}
-          [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
+          {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }} [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
         message: >-
-          {{ range .Alerts }}
+          {{ range .Alerts -}}
           **Instance:** {{ .Labels.instance }}
           **Severity:** {{ .Labels.severity }}
           **Summary:** {{ .Annotations.summary }}
           **Detail:** {{ .Annotations.description }}
+
           {{ end }}
 
 inhibit_rules:

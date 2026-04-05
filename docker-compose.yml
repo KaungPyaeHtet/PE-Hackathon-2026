@@ -91,20 +91,11 @@ services:
       - "9093:9093"
     volumes:
       - ./monitoring/alertmanager:/etc/alertmanager:ro
+      - alertmanager_data:/alertmanager
     environment:
-      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
-    # Busybox-based image: write webhook URL to a file (webhook_url_file in alertmanager.yml).
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        set -e
-        if [ -z "$$DISCORD_WEBHOOK_URL" ]; then
-          echo "alertmanager: DISCORD_WEBHOOK_URL is empty — set it in .env; using stub URL (notifications will fail)"
-          printf '%s' 'https://discord.com/api/webhooks/0/invalid' > /tmp/discord_webhook_url
-        else
-          printf '%s' "$$DISCORD_WEBHOOK_URL" > /tmp/discord_webhook_url
-        fi
-        exec /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-https://discord.com/api/webhooks/1490298288879177859/gvWV4l_to9M7iLpFFR7hJk0Aphwe0lyGyYYd7dVaRpqi6RmQCW2uADhBPqwS1rkH-i_q}
+    # docker-entrypoint.sh writes /tmp/discord_webhook_url (Compose $$ escaping broke inline scripts).
+    entrypoint: ["/bin/sh", "/etc/alertmanager/docker-entrypoint.sh"]
     restart: unless-stopped
 
   # ── Grafana ───────────────────────────────────────────────────────────────────
@@ -130,3 +121,4 @@ volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+  alertmanager_data:

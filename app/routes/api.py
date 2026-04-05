@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, abort, jsonify, redirect, request
 from peewee import fn
 
+from app import cache
 from app.csv_parse import parse_dt
 from app.database import db
 from app.models import Event, Url, User
@@ -132,10 +133,35 @@ def _redirect_response_for_short_code(short_code: str, *, log_name: str):
     code = short_code.strip()
     if len(code) > 32:
         abort(404)
+
+    # Cache read — avoid DB hit on hot redirect paths
+    cached = cache.get_by_short_code(code)
+    if cached is not None:
+        if not cached.get("is_active", True):
+            log.warning("redirect_inactive", extra={"short_code": code, "url_id": cached.get("id"), "via": log_name, "source": "cache"})
+            return jsonify(error="gone", reason="inactive"), 410
+        original_url = cached["original_url"]
+        if not _is_valid_url(original_url):
+            abort(404)
+        log.info("redirect", extra={"short_code": code, "url_id": cached.get("id"), "destination": original_url, "via": log_name, "source": "cache"})
+        _create_event_safe(
+            url_id=cached["id"],
+            user_id=cached["user_id"],
+            event_type="redirect",
+            details={"short_code": code, "original_url": original_url},
+        )
+        return redirect(original_url, code=302)
+
+    # Cache miss — query DB and populate cache
     try:
         row = Url.get(Url.short_code == code)
     except Url.DoesNotExist:
         abort(404)
+
+    payload = url_dict(row)
+    cache.set_by_short_code(code, payload)
+    cache.set_by_url_id(row.id, payload)
+
     if not row.is_active:
         log.warning("redirect_inactive", extra={"short_code": code, "url_id": row.id, "via": log_name})
         return jsonify(error="gone", reason="inactive"), 410
@@ -143,7 +169,7 @@ def _redirect_response_for_short_code(short_code: str, *, log_name: str):
         abort(404)
     log.info(
         "redirect",
-        extra={"short_code": code, "url_id": row.id, "destination": row.original_url, "via": log_name},
+        extra={"short_code": code, "url_id": row.id, "destination": row.original_url, "via": log_name, "source": "db"},
     )
     _create_event_safe(
         url_id=row.id,
@@ -369,11 +395,17 @@ def redirect_by_short_code(short_code: str):
 
 @api_bp.route("/urls/<int:url_id>", methods=["GET"])
 def get_url(url_id: int):
+    cached = cache.get_by_url_id(url_id)
+    if cached is not None:
+        return jsonify(cached)
     try:
         row = Url.get_by_id(url_id)
     except Url.DoesNotExist:
         abort(404)
-    return jsonify(url_dict(row))
+    payload = url_dict(row)
+    cache.set_by_url_id(url_id, payload)
+    cache.set_by_short_code(row.short_code, payload)
+    return jsonify(payload)
 
 
 @api_bp.route("/urls/<int:url_id>", methods=["PUT"])
@@ -431,6 +463,7 @@ def update_url(url_id: int):
     if changed:
         row.updated_at = _utcnow_naive()
         row.save()
+        cache.invalidate_url(row.id, row.short_code)
 
     return jsonify(url_dict(row))
 
@@ -441,6 +474,7 @@ def delete_url(url_id: int):
         row = Url.get_by_id(url_id)
     except Url.DoesNotExist:
         abort(404)
+    cache.invalidate_url(row.id, row.short_code)
     row.delete_instance()
     log.info("url_deleted", extra={"url_id": url_id})
     return jsonify(deleted=True, id=url_id)

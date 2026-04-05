@@ -156,3 +156,44 @@ Possible causes:
 | Missing DB index on `short_code` | Already indexed in the schema; if dropped, recreate: `CREATE UNIQUE INDEX ON urls (short_code);` |
 | Too many concurrent connections | Reduce `--users` in locust, or add a connection pool |
 | Postgres running out of `max_connections` | Check `SHOW max_connections;` in psql; default is 100 |
+
+---
+
+## Alertmanager UI (`http://localhost:9093`) does not load
+
+**Symptoms:** Browser shows “connection refused”, spinner forever, or “can’t connect”.
+
+### 1. Confirm the container is running
+
+```bash
+docker compose ps alertmanager
+```
+
+You want **State** `running`. If it is `Exited` or missing:
+
+```bash
+docker compose logs alertmanager
+docker compose up -d alertmanager
+```
+
+### 2. Try IPv4 explicitly (macOS / Docker Desktop)
+
+Some setups resolve **`localhost`** to **IPv6** (`::1`) while the published port is only on **IPv4**. Open:
+
+**http://127.0.0.1:9093**
+
+(or run `curl -sS http://127.0.0.1:9093/-/healthy` — expect `OK`).
+
+### 3. Check nothing else uses port 9093
+
+```bash
+lsof -i :9093
+```
+
+### 4. Where to click in the UI
+
+Open the root URL above. Use the top navigation for **Alerts** and **Silences** (Alertmanager v0.27+). There is no separate path like `/alerts` required for the home screen.
+
+### 5. Prometheus is separate
+
+Metrics UI is **http://localhost:9090** (Prometheus). Alertmanager is **9093** only.

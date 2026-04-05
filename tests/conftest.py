@@ -39,12 +39,16 @@ def _db(app):
     with app.app_context():
         db.create_tables([User, Url, Event], safe=True)
 
+        # Remove any stale fixtures from a previous session (cascade handles
+        # dependent Url and Event rows automatically).
+        User.delete().where(User.id == TEST_USER_ID).execute()
+
         User.insert(
             id=TEST_USER_ID,
             username="testuser",
             email="test@example.com",
             created_at=_NOW,
-        ).on_conflict_ignore().execute()
+        ).execute()
 
         Url.insert(
             id=TEST_URL_ID,
@@ -55,7 +59,7 @@ def _db(app):
             is_active=True,
             created_at=_NOW,
             updated_at=_NOW,
-        ).on_conflict_ignore().execute()
+        ).execute()
 
         Url.insert(
             id=TEST_URL_ID_2,
@@ -66,7 +70,7 @@ def _db(app):
             is_active=True,
             created_at=_NOW,
             updated_at=_NOW,
-        ).on_conflict_ignore().execute()
+        ).execute()
 
         Event.insert(
             id=TEST_EVENT_ID,
@@ -75,7 +79,7 @@ def _db(app):
             event_type="click",
             timestamp=_NOW,
             details="{}",
-        ).on_conflict_ignore().execute()
+        ).execute()
 
         yield
 

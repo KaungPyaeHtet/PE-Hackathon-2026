@@ -88,22 +88,77 @@ sudo systemctl enable --now hackathon
 
 ---
 
-### Option B — Docker
-
-```dockerfile
-# Dockerfile (add to repo root if needed)
-FROM python:3.13-slim
-WORKDIR /app
-COPY . .
-RUN pip install uv && uv sync --no-dev
-EXPOSE 5000
-CMD ["uv", "run", "gunicorn", "app:create_app()", "--bind", "0.0.0.0:5000", "--workers", "4"]
-```
+### Option B — Docker (single container)
 
 ```bash
 docker build -t hackathon-api .
 docker run -p 5000:5000 --env-file .env hackathon-api
 ```
+
+---
+
+### Option C — Docker Compose (full stack, recommended for demos)
+
+This is the production-like topology: **2 app instances + Nginx load balancer + PostgreSQL + Redis + Prometheus + Grafana + Alertmanager**.
+
+**1. Configure environment**
+
+```bash
+cp .env.example .env
+# Edit .env:
+#   DATABASE_PASSWORD — set a strong password
+#   DISCORD_WEBHOOK_URL — optional; alerts go here
+#   GRAFANA_PASSWORD — Grafana admin password
+#   FLASK_DEBUG=false
+```
+
+**2. Start the full stack**
+
+```bash
+docker compose up -d
+```
+
+Docker will:
+1. Build the app image from `Dockerfile`.
+2. Start PostgreSQL (with healthcheck) and Redis.
+3. Start two gunicorn app instances (`app1`, `app2`) once DB + Redis are healthy.
+4. Start Nginx on port **80**, load-balancing across `app1:5000` and `app2:5000`.
+5. Start Prometheus (port **9090**), Alertmanager (port **9093**), and Grafana (port **3000**).
+
+**3. Load seed data (first run only)**
+
+```bash
+docker compose exec app1 uv run python scripts/load_pe_seed.py
+```
+
+**4. Verify everything is running**
+
+```bash
+docker compose ps                   # all services should be "running"
+curl http://localhost/health        # → {"status": "ok"}  (through Nginx)
+open http://localhost:3000          # Grafana (admin / your GRAFANA_PASSWORD)
+open http://localhost:9090          # Prometheus
+open http://localhost:9093          # Alertmanager
+```
+
+**5. Teardown**
+
+```bash
+docker compose down          # stop but keep volumes (data survives)
+docker compose down -v       # stop AND delete all data volumes (full reset)
+```
+
+---
+
+#### Service URLs (Docker Compose)
+
+| Service | URL | Notes |
+|---------|-----|-------|
+| API (via Nginx) | http://localhost | Main entry point |
+| app1 (direct) | http://localhost:5001 | Debug only (add port in compose if needed) |
+| Prometheus | http://localhost:9090 | Metrics explorer |
+| Alertmanager | http://localhost:9093 | Alert rules and silences |
+| Grafana | http://localhost:3000 | Dashboards (admin login) |
 
 ---
 

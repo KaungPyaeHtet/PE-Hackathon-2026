@@ -17,12 +17,17 @@ log = logging.getLogger(__name__)
 
 _TTL = 60  # seconds
 
-# Module-level singleton; created lazily on first use
+# Module-level singleton; created lazily on first use.
+# _DISABLED=True after the first failed connection so we never stall every
+# request waiting for a timeout when Redis is unreachable.
 _client = None
+_DISABLED = False
 
 
 def _get() -> "redis.Redis | None":  # type: ignore[name-defined]  # noqa: F821
-    global _client
+    global _client, _DISABLED
+    if _DISABLED:
+        return None
     if _client is not None:
         return _client
     try:
@@ -41,7 +46,8 @@ def _get() -> "redis.Redis | None":  # type: ignore[name-defined]  # noqa: F821
         log.info("redis_connected", extra={"host": os.environ.get("REDIS_HOST", "localhost")})
         return _client
     except Exception as exc:
-        log.warning("redis_unavailable", extra={"reason": str(exc)})
+        _DISABLED = True
+        log.warning("redis_unavailable_cache_disabled", extra={"reason": str(exc)})
         return None
 
 

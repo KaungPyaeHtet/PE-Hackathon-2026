@@ -2,7 +2,7 @@
 
 A production-ready URL shortener service built with Flask, Peewee ORM, and PostgreSQL.
 
-**Stack:** Python 3.13 · Flask 3.1 · Peewee ORM · PostgreSQL 16 · uv
+**Stack:** Python 3.13 · Flask 3.1 · Peewee ORM · PostgreSQL 16 · Redis 7 · Nginx · uv
 
 ---
 
@@ -20,6 +20,8 @@ A production-ready URL shortener service built with Flask, Peewee ORM, and Postg
 ---
 
 ## Quick Start
+
+### Option A — Local dev (uv + local PostgreSQL)
 
 **Prerequisites:** [uv](https://docs.astral.sh/uv/getting-started/installation/) and PostgreSQL running locally.
 
@@ -45,44 +47,71 @@ uv run run.py
 # 7. Verify
 curl http://localhost:5000/health
 # → {"status":"ok"}
-
-# Optional: open the demo dashboard (same origin → calls /users, /urls, /events)
-open http://localhost:5000/dashboard
 ```
+
+### Option B — Full stack (Docker Compose)
+
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) with Compose plugin.
+
+```bash
+git clone <repo-url> && cd PE-Hackathon-2026
+cp .env.example .env          # set strong passwords before starting
+
+docker compose up -d
+docker compose exec app1 uv run python scripts/load_pe_seed.py
+
+curl http://localhost/health   # → {"status":"ok"} (through Nginx on :80)
+open http://localhost:3000     # Grafana dashboards
+```
+
+Starts: Nginx (`:80`) → 2× Flask/gunicorn → PostgreSQL + Redis + Prometheus + Grafana + Alertmanager.
+
+> **Discord alerts:** set `DISCORD_WEBHOOK_URL` in `.env`, then run `docker compose up -d alertmanager` to reload.
+> Alerts appear in Alertmanager only when a Prometheus rule is **firing** — kill `hackathon_app1` for ~2 min to trigger **ServiceDown**.
+> On macOS, use **http://127.0.0.1:9093** if `localhost` doesn't connect.
 
 ---
 
 ## Architecture
 
+### Local dev (single process)
+
 ```
-                         ┌─────────────────────────────────┐
-                         │          Client / Browser        │
-                         └────────────────┬────────────────┘
-                                          │ HTTP
-                                          ▼
-                         ┌─────────────────────────────────┐
-                         │         Flask Application        │
-                         │                                  │
-                         │  ┌──────────┐  ┌─────────────┐  │
-                         │  │ API      │  │  Redirect   │  │
-                         │  │ Blueprint│  │  Blueprint  │  │
-                         │  │ /api/*   │  │  /s/<code>  │  │
-                         │  └────┬─────┘  └──────┬──────┘  │
-                         │       │                │         │
-                         │  ┌────▼────────────────▼──────┐  │
-                         │  │       Peewee ORM           │  │
-                         │  │  User · Url · Event        │  │
-                         │  └────────────────┬───────────┘  │
-                         └───────────────────┼─────────────┘
-                                             │
-                                             ▼
-                         ┌─────────────────────────────────┐
-                         │         PostgreSQL 16            │
-                         │                                  │
-                         │  ┌────────┐ ┌──────┐ ┌───────┐  │
-                         │  │ users  │ │ urls │ │events │  │
-                         │  └────────┘ └──────┘ └───────┘  │
-                         └─────────────────────────────────┘
+Client → Flask dev server :5000 → Peewee ORM → PostgreSQL 16
+```
+
+### Full stack (Docker Compose)
+
+```
+                    ┌──────────────────────────────────────┐
+                    │          Client / Browser            │
+                    └──────────────┬───────────────────────┘
+                                   │ HTTP :80
+                                   ▼
+                    ┌──────────────────────────────────────┐
+                    │       Nginx (load balancer)          │
+                    │       round-robin upstream           │
+                    └──────┬───────────────────┬───────────┘
+                           │                   │
+              ┌────────────▼────┐     ┌────────▼────────────┐
+              │ Flask/gunicorn  │     │  Flask/gunicorn     │
+              │   app1 :5000    │     │    app2 :5000       │
+              │  API · Redirect │     │  API · Redirect     │
+              └────────┬────────┘     └─────────┬───────────┘
+                       │                        │
+          ┌────────────▼────────────────────────▼──────────┐
+          │                                                │
+  ┌───────▼──────────┐                    ┌───────────────▼──────┐
+  │  PostgreSQL 16   │                    │   Redis 7 (cache)    │
+  │                  │                    │   allkeys-lru 128 MB │
+  │  users  urls     │                    └──────────────────────┘
+  │  events          │
+  └──────────────────┘
+
+── Observability ────────────────────────────────────────────────
+  Prometheus :9090  ←scrapes /metrics─  app1, app2
+  Alertmanager :9093  ←alert rules─  Prometheus  →  Discord
+  Grafana :3000  ←datasource─  Prometheus
 ```
 
 ### Data Model
@@ -223,35 +252,46 @@ curl -L http://localhost:5000/s/abc123
 PE-Hackathon-2026/
 ├── app/
 │   ├── __init__.py          # App factory (create_app)
+│   ├── cache.py             # Redis read-through cache (fail-open)
 │   ├── csv_parse.py         # parse_bool / parse_dt helpers for seed loading
 │   ├── database.py          # DatabaseProxy, BaseModel, per-request connection hooks
 │   ├── models/
 │   │   ├── __init__.py      # Re-exports User, Url, Event
-│   │   ├── user.py          # User model
-│   │   ├── url.py           # Url model (short_code index)
-│   │   └── event.py         # Event model
+│   │   ├── user.py
+│   │   ├── url.py           # short_code unique index
+│   │   └── event.py
 │   └── routes/
 │       ├── __init__.py      # register_routes() — wires blueprints to app
 │       └── api.py           # api_bp (/api/*) and short_bp (/s/<code>)
 ├── scripts/
-│   └── load_pe_seed.py      # Bulk-load PE/*.csv into Postgres (--reset flag)
+│   └── load_pe_seed.py      # Bulk-load PE/*.csv into Postgres (--reset to wipe first)
 ├── loadtests/
 │   ├── locustfile.py        # 50-VU load test scenario
-│   └── BASELINE.md          # Recorded performance results
+│   └── BASELINE.md          # Recorded performance baselines
 ├── tests/
-│   ├── test_health.py       # Smoke test: /health
-│   └── test_csv_parse.py    # Unit tests for CSV parsing helpers
+│   ├── test_health.py
+│   └── test_csv_parse.py
 ├── docs/
-│   ├── DEPLOY.md            # Deployment guide and rollback procedures
+│   ├── DEPLOY.md            # Deployment guide and rollback
 │   ├── TROUBLESHOOTING.md   # Known issues and fixes
 │   ├── RUNBOOKS.md          # Operational runbooks
-│   ├── DECISIONS.md         # Architecture decision log
-│   └── CAPACITY.md          # Capacity planning and limits
+│   ├── DECISIONS.md         # Architecture decision log (ADRs)
+│   ├── CAPACITY.md          # Capacity planning and scaling path
+│   ├── ERROR_HANDLING.md    # HTTP error response reference
+│   └── FAILURE_MODES.md     # Resilience and failure scenarios
+├── monitoring/
+│   ├── prometheus/          # prometheus.yml + alert rules
+│   ├── alertmanager/        # alertmanager.yml + Discord webhook config
+│   └── grafana/             # Provisioned datasources and dashboards
+├── nginx/
+│   └── nginx.conf           # Upstream load-balancer config (app1, app2)
+├── docker-compose.yml       # Full stack: app × 2, db, redis, nginx, observability
+├── Dockerfile
 ├── .env.example             # Environment variable template
-├── .github/workflows/ci.yml # GitHub Actions CI (test on every push)
+├── .github/workflows/ci.yml # GitHub Actions: test → deploy gate
 ├── pyproject.toml           # Project metadata and dependencies
 ├── run.py                   # Entry point: uv run run.py
-└── README.md                # This file
+└── README.md
 ```
 
 ---
@@ -263,11 +303,16 @@ Copy `.env.example` to `.env` and adjust as needed.
 | Variable | Default | Required | Description |
 |----------|---------|----------|-------------|
 | `DATABASE_NAME` | `hackathon_db` | Yes | PostgreSQL database name |
-| `DATABASE_HOST` | `localhost` | Yes | PostgreSQL host |
+| `DATABASE_HOST` | `localhost` | Yes | PostgreSQL host (`db` in Docker Compose) |
 | `DATABASE_PORT` | `5432` | Yes | PostgreSQL port |
 | `DATABASE_USER` | `postgres` | Yes | PostgreSQL user |
-| `DATABASE_PASSWORD` | `postgres` | Yes | PostgreSQL password |
-| `FLASK_DEBUG` | `false` | No | Enable Flask debug mode (never `true` in production) |
+| `DATABASE_PASSWORD` | `postgres` | **Change in prod** | PostgreSQL password |
+| `FLASK_DEBUG` | `false` | No | Enable Flask debug mode — never `true` in production |
+| `REDIS_HOST` | `localhost` | No | Redis host (`redis` in Docker Compose) |
+| `REDIS_PORT` | `6379` | No | Redis port |
+| `DISCORD_WEBHOOK_URL` | — | No | Discord webhook for Alertmanager notifications |
+| `GRAFANA_USER` | `admin` | No | Grafana admin username (Docker Compose only) |
+| `GRAFANA_PASSWORD` | `admin` | **Change in prod** | Grafana admin password (Docker Compose only) |
 
 ---
 
@@ -283,9 +328,7 @@ uv run pytest -v
 uv run pytest tests/ --cov=app --cov-report=term-missing --cov-fail-under=70
 ```
 
-CI runs on every push and pull request (`.github/workflows/ci.yml`): real **PostgreSQL 16** service, `pytest-cov`, and **`--cov-fail-under=70`**. A **`deploy`** job runs on `main` only **after** tests pass — if tests fail, deploy is skipped (The Gatekeeper).
-
-**Integration-style example:** `tests/test_integration_shorten.py` posts to **`POST /urls`** (shorten), then reads the new row and `created` event from the database.
+CI (`.github/workflows/ci.yml`) runs on every push against a real PostgreSQL 16 service. A `deploy` job only runs on `main` after tests pass — failing tests block the deploy entirely.
 
 ---
 
@@ -310,10 +353,10 @@ See `loadtests/BASELINE.md` for full results and a template for recording future
 
 | Doc | What's in it |
 |-----|--------------|
-| [`docs/ERROR_HANDLING.md`](docs/ERROR_HANDLING.md) | **Tier 2:** How **404** and **500** (and other codes) are returned as JSON |
-| [`docs/FAILURE_MODES.md`](docs/FAILURE_MODES.md) | **Tier 3:** Chaos / restarts, DB & Redis failure, garbage input, CI deploy gate |
-| [`docs/DEPLOY.md`](docs/DEPLOY.md) | How to deploy, rollback, and promote to production |
-| [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Bugs hit during the hackathon and how they were fixed |
-| [`docs/RUNBOOKS.md`](docs/RUNBOOKS.md) | Step-by-step operational runbooks for common alerts |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Why Flask, Peewee, uv — the reasoning behind each choice |
-| [`docs/CAPACITY.md`](docs/CAPACITY.md) | How many users can we handle? Where are the limits? |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Local dev, bare-metal, and Docker Compose deployment; rollback procedures |
+| [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Common errors and fixes encountered during development |
+| [`docs/RUNBOOKS.md`](docs/RUNBOOKS.md) | Step-by-step guides for service down, DB unreachable, high latency, CI failures |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADRs: why Flask, Peewee, uv, Redis, Nginx, Prometheus, Docker Compose |
+| [`docs/CAPACITY.md`](docs/CAPACITY.md) | Measured baselines, bottleneck analysis, and scaling path |
+| [`docs/ERROR_HANDLING.md`](docs/ERROR_HANDLING.md) | How 4xx/5xx errors are returned as JSON across all endpoints |
+| [`docs/FAILURE_MODES.md`](docs/FAILURE_MODES.md) | What breaks under chaos: process kill, DB down, Redis down, bad input, CI gate |
