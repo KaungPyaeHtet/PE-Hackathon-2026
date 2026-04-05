@@ -5,6 +5,7 @@ requires-python = ">=3.13"
 dependencies = [
     "faker>=33.0",
     "flask>=3.1",
+    "gunicorn>=23.0",
     "peewee>=3.17",
     "psycopg2-binary>=2.9",
     "python-dotenv>=1.0",
@@ -15,9 +16,11 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "fakeredis>=2.23",
     "locust>=2.32",
     "pytest>=9.0.2",
     "pytest-cov>=6.0",
+    "redis>=5.0",
 ]
 
 [tool.pytest.ini_options]
@@ -30,3 +33,4 @@ omit = ["app/models/__init__.py"]
 
 [tool.coverage.report]
 show_missing = true
+fail_under = 70

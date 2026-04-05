@@ -20,6 +20,10 @@ _ALPHABET = string.ascii_letters + string.digits
 _MAX_COLLISION_RETRIES = 10
 
 
+def _utcnow_naive() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def _dt_iso(dt) -> str | None:
     if dt is None:
         return None
@@ -76,6 +80,30 @@ def _next_url_id() -> int:
     return (max_id or 0) + 1
 
 
+def _next_event_id() -> int:
+    return (Event.select(fn.MAX(Event.id)).scalar() or 0) + 1
+
+
+def _create_event(*, url_id: int, user_id: int, event_type: str, details: dict, ts: datetime | None = None) -> Event:
+    timestamp = ts or _utcnow_naive()
+    return Event.create(
+        id=_next_event_id(),
+        url_id=url_id,
+        user_id=user_id,
+        event_type=event_type,
+        timestamp=timestamp,
+        details=json.dumps(details),
+    )
+
+
+def _create_event_safe(*, url_id: int, user_id: int, event_type: str, details: dict, ts: datetime | None = None) -> None:
+    """Best-effort event logging that never breaks the request flow."""
+    try:
+        _create_event(url_id=url_id, user_id=user_id, event_type=event_type, details=details, ts=ts)
+    except Exception:
+        pass
+
+
 def _generate_short_code(length: int = 7) -> str:
     for _ in range(_MAX_COLLISION_RETRIES):
         code = "".join(secrets.choice(_ALPHABET) for _ in range(length))
@@ -117,21 +145,12 @@ def _redirect_response_for_short_code(short_code: str, *, log_name: str):
         "redirect",
         extra={"short_code": code, "url_id": row.id, "destination": row.original_url, "via": log_name},
     )
-    # The Unseen Observer: record every successful redirect as an event.
-    # Use the URL owner's user_id since there is no authenticated user in a redirect.
-    try:
-        next_id = (Event.select(fn.MAX(Event.id)).scalar() or 0) + 1
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        Event.create(
-            id=next_id,
-            url_id=row.id,
-            user_id=row.user_id,
-            event_type="redirect",
-            timestamp=now,
-            details=json.dumps({"short_code": code, "destination": row.original_url}),
-        )
-    except Exception:
-        pass  # never let event logging break the redirect
+    _create_event_safe(
+        url_id=row.id,
+        user_id=row.user_id,
+        event_type="redirect",
+        details={"short_code": code, "original_url": row.original_url},
+    )
     return redirect(row.original_url, code=302)
 
 
@@ -223,7 +242,7 @@ def create_user():
     if not username or not email:
         return jsonify(error="validation_error", message="username and email required"), 400
 
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    now = _utcnow_naive()
     u = User.create(id=_next_user_id(), username=username, email=email, created_at=now)
     return jsonify(user_dict(u)), 201
 
@@ -315,17 +334,25 @@ def create_url():
         return jsonify(error="user not found"), 404
 
     try:
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        row = Url.create(
-            id=_next_url_id(),
-            user_id=user_id,
-            short_code=_generate_short_code(),
-            original_url=original_url,
-            title=(data.get("title") or "").strip(),
-            is_active=True,
-            created_at=now,
-            updated_at=now,
-        )
+        now = _utcnow_naive()
+        with db.atomic():
+            row = Url.create(
+                id=_next_url_id(),
+                user_id=user_id,
+                short_code=_generate_short_code(),
+                original_url=original_url,
+                title=(data.get("title") or "").strip(),
+                is_active=True,
+                created_at=now,
+                updated_at=now,
+            )
+            _create_event(
+                url_id=row.id,
+                user_id=user_id,
+                event_type="created",
+                details={"short_code": row.short_code, "original_url": row.original_url},
+                ts=now,
+            )
     except RuntimeError as e:
         log.error("short_code_generation_failed", extra={"error": str(e)})
         return jsonify(error=str(e)), 503
@@ -358,24 +385,51 @@ def update_url(url_id: int):
 
     data = request.get_json(silent=True) or {}
     changed = False
+    now = _utcnow_naive()
 
     if "title" in data:
-        row.title = str(data["title"])
-        changed = True
+        new_title = str(data["title"])
+        if new_title != row.title:
+            row.title = new_title
+            changed = True
+            _create_event_safe(
+                url_id=row.id,
+                user_id=row.user_id,
+                event_type="updated",
+                details={"field": "title", "new_value": new_title},
+                ts=now,
+            )
 
     if "is_active" in data:
-        row.is_active = bool(data["is_active"])
-        changed = True
+        new_active = bool(data["is_active"])
+        if new_active != row.is_active:
+            row.is_active = new_active
+            changed = True
+            _create_event_safe(
+                url_id=row.id,
+                user_id=row.user_id,
+                event_type="updated",
+                details={"field": "is_active", "new_value": new_active},
+                ts=now,
+            )
 
     if "original_url" in data:
         new_url = str(data["original_url"]).strip()
         if not _is_valid_url(new_url):
             return jsonify(error="original_url must be a valid http or https URL"), 400
-        row.original_url = new_url
-        changed = True
+        if new_url != row.original_url:
+            row.original_url = new_url
+            changed = True
+            _create_event_safe(
+                url_id=row.id,
+                user_id=row.user_id,
+                event_type="updated",
+                details={"field": "original_url", "new_value": new_url},
+                ts=now,
+            )
 
     if changed:
-        row.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        row.updated_at = _utcnow_naive()
         row.save()
 
     return jsonify(url_dict(row))
@@ -441,21 +495,14 @@ def create_event():
     except User.DoesNotExist:
         return jsonify(error="user not found"), 404
 
-    # The Fractured Vessel: details must be a JSON object, not a plain string or other type.
     details = data.get("details", {})
     if details is not None and not isinstance(details, dict):
         return jsonify(error="details must be a JSON object"), 400
-    details = json.dumps(details or {})
-
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
-    next_id = (Event.select(fn.MAX(Event.id)).scalar() or 0) + 1
-    row = Event.create(
-        id=next_id,
+    row = _create_event(
         url_id=url_id,
         user_id=user_id,
         event_type=event_type,
-        timestamp=now,
-        details=details,
+        details=details or {},
     )
     return jsonify(event_dict(row)), 201
 

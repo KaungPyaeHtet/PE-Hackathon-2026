@@ -4,8 +4,11 @@ on:
   push:
   pull_request:
 
+# The Gatekeeper (Tier 2 Silver): this workflow must pass before shipping.
+# Tier 3 Gold: line coverage ≥70% (--cov-fail-under / pyproject fail_under).
 jobs:
   test:
+    name: Test & coverage
     runs-on: ubuntu-latest
 
     services:
@@ -47,7 +50,7 @@ jobs:
             --cov=app \
             --cov-report=term-missing \
             --cov-report=xml \
-            --cov-fail-under=50
+            --cov-fail-under=70
 
       - name: Upload coverage report
         if: always()
@@ -55,3 +58,15 @@ jobs:
         with:
           name: coverage-report
           path: coverage.xml
+
+  deploy:
+    name: Deploy (only if tests pass)
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy placeholder
+        run: |
+          echo "CI passed — replace this step with your real deploy (fly.io, Railway, etc.)."
+          echo "If the test job fails, this job never runs (merge/deploy is blocked)."

@@ -45,6 +45,9 @@ uv run run.py
 # 7. Verify
 curl http://localhost:5000/health
 # → {"status":"ok"}
+
+# Optional: open the demo dashboard (same origin → calls /users, /urls, /events)
+open http://localhost:5000/dashboard
 ```
 
 ---
@@ -274,7 +277,15 @@ Copy `.env.example` to `.env` and adjust as needed.
 uv run pytest -v
 ```
 
-CI runs automatically on every push via GitHub Actions (see `.github/workflows/ci.yml`). It spins up a real PostgreSQL 16 container — no mocking.
+**Coverage (Silver / Gold hackathon tiers):** the repo enforces **≥70%** line coverage in CI.
+
+```bash
+uv run pytest tests/ --cov=app --cov-report=term-missing --cov-fail-under=70
+```
+
+CI runs on every push and pull request (`.github/workflows/ci.yml`): real **PostgreSQL 16** service, `pytest-cov`, and **`--cov-fail-under=70`**. A **`deploy`** job runs on `main` only **after** tests pass — if tests fail, deploy is skipped (The Gatekeeper).
+
+**Integration-style example:** `tests/test_integration_shorten.py` posts to **`POST /urls`** (shorten), then reads the new row and `created` event from the database.
 
 ---
 
@@ -299,6 +310,8 @@ See `loadtests/BASELINE.md` for full results and a template for recording future
 
 | Doc | What's in it |
 |-----|--------------|
+| [`docs/ERROR_HANDLING.md`](docs/ERROR_HANDLING.md) | **Tier 2:** How **404** and **500** (and other codes) are returned as JSON |
+| [`docs/FAILURE_MODES.md`](docs/FAILURE_MODES.md) | **Tier 3:** Chaos / restarts, DB & Redis failure, garbage input, CI deploy gate |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | How to deploy, rollback, and promote to production |
 | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Bugs hit during the hackathon and how they were fixed |
 | [`docs/RUNBOOKS.md`](docs/RUNBOOKS.md) | Step-by-step operational runbooks for common alerts |

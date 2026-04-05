@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PE Hackathon — API dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}" />
+  </head>
+  <body>
+    <header class="top">
+      <h1>URL shortener — live API</h1>
+      <p class="sub">Reads <code>GET /users</code>, <code>/urls</code>, <code>/events</code> from this server.</p>
+      <div id="health-pill" class="pill unknown" aria-live="polite">
+        <span class="dot"></span>
+        <span>Checking health…</span>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat">
+        <span class="stat-n" id="stat-users">—</span>
+        <span class="stat-l">Users</span>
+        <span class="stat-note" id="stat-users-note"></span>
+      </div>
+      <div class="stat">
+        <span class="stat-n" id="stat-urls">—</span>
+        <span class="stat-l">URLs</span>
+        <span class="stat-note" id="stat-urls-note"></span>
+      </div>
+      <div class="stat">
+        <span class="stat-n" id="stat-events">—</span>
+        <span class="stat-l">Events</span>
+        <span class="stat-note" id="stat-events-note"></span>
+      </div>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" class="active" data-tab="browse" role="tab">Browse</button>
+      <button type="button" data-tab="create" role="tab">Create link</button>
+    </nav>
+
+    <div id="tab-browse" class="tab-panel active">
+      <p class="hint" id="user-page-hint"></p>
+      <h2>Users</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>username</th>
+              <th>email</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-users"></tbody>
+        </table>
+      </div>
+      <h2>URLs</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>code</th>
+              <th>target</th>
+              <th>active</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-urls"></tbody>
+        </table>
+      </div>
+      <h2>Events</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>id</th>
+              <th>type</th>
+              <th>url_id</th>
+              <th>time</th>
+              <th>details</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-events"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-create" class="tab-panel">
+      <form id="form-create-url" class="create-form">
+        <label>
+          User
+          <select id="create-user-id" required>
+            <option value="">— pick user —</option>
+          </select>
+        </label>
+        <label>
+          Original URL
+          <input id="create-url" type="url" placeholder="https://…" required />
+        </label>
+        <label>
+          Title (optional)
+          <input id="create-title" type="text" placeholder="My link" />
+        </label>
+        <button type="submit">POST /urls</button>
+      </form>
+      <pre id="create-result" class="result" hidden></pre>
+    </div>
+
+    <div id="toast" class="toast" hidden role="status"></div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+  </body>
+</html>

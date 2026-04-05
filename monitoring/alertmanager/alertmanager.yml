@@ -19,7 +19,9 @@ route:
 receivers:
   - name: "discord"
     discord_configs:
-      - webhook_url: "${DISCORD_WEBHOOK_URL}"
+      # URL is written to this path at container start from DISCORD_WEBHOOK_URL
+      # (Alertmanager does not expand environment variables inside YAML).
+      - webhook_url_file: /tmp/discord_webhook_url
         title: >-
           {{ if eq .Status "firing" }}🔴{{ else }}✅{{ end }}
           [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}

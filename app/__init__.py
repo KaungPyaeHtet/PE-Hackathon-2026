@@ -3,7 +3,7 @@ import os
 
 import psutil
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 
 from app.database import db, ensure_tables, init_db
 from app.logging_config import LOG_FILE, setup_logging
@@ -69,11 +69,17 @@ def create_app():
 
     # ── Routes ─────────────────────────────────────────────────────────────────
 
+    @app.route("/dashboard")
+    def dashboard():
+        """Hackathon demo UI — live users, URLs, events from the JSON API."""
+        return render_template("dashboard.html")
+
     @app.route("/")
     def index():
         return jsonify(
             service="mlh-pe-hackathon",
             seed="PE/*.csv — load with: uv run python scripts/load_pe_seed.py",
+            dashboard="GET /dashboard — browser UI (live API data)",
             endpoints={
                 "health": "GET /health",
                 "metrics": "GET /metrics",

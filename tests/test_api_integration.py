@@ -4,7 +4,14 @@ All tests use fixtures from conftest.py (session-scoped DB with seeded test data
 Tests that create rows clean up after themselves so they don't pollute other tests.
 """
 
+import json
+
+from app.models import Event
 from tests.conftest import TEST_EVENT_ID, TEST_SHORT_CODE, TEST_URL_ID, TEST_USER_ID
+
+
+def _cleanup_updated_events(url_id: int) -> None:
+    Event.delete().where((Event.url_id == url_id) & (Event.event_type == "updated")).execute()
 
 # ── Health ─────────────────────────────────────────────────────────────────────
 
@@ -173,11 +180,20 @@ def test_create_url_success(client):
     assert data["original_url"] == "https://example.com/integration-test"
     assert data["is_active"] is True
 
+    # Seed-shaped analytics: POST /urls emits a "created" event
+    created_rows = Event.select().where(
+        (Event.url_id == data["id"]) & (Event.event_type == "created")
+    )
+    assert created_rows.count() == 1
+    details = json.loads(created_rows.get().details)
+    assert details["short_code"] == data["short_code"]
+    assert details["original_url"] == "https://example.com/integration-test"
+
     # Verify the row exists in the DB
     from app.models import Url
     url = Url.get_by_id(data["id"])
     assert url.short_code == data["short_code"]
-    url.delete_instance()  # cleanup
+    url.delete_instance()  # cleanup (cascade removes created event)
 
 
 def test_create_url_missing_original_url(client):
@@ -228,6 +244,7 @@ def test_update_url_title(client):
     assert rv.get_json()["title"] == "Updated Title"
     # Reset
     client.put(f"/urls/{TEST_URL_ID}", json={"title": "Test URL"})
+    _cleanup_updated_events(TEST_URL_ID)
 
 
 def test_deactivate_url(client):
@@ -236,6 +253,7 @@ def test_deactivate_url(client):
     assert rv.get_json()["is_active"] is False
     # Reactivate so other tests aren't affected
     client.put(f"/urls/{TEST_URL_ID}", json={"is_active": True})
+    _cleanup_updated_events(TEST_URL_ID)
 
 
 def test_update_url_invalid_original_url(client):
@@ -470,6 +488,9 @@ def test_redirect_follows_short_code(client):
     # Flask test client doesn't follow redirects by default
     assert rv.status_code == 302
     assert "example.com" in rv.headers["Location"]
+    Event.delete().where(
+        (Event.url_id == TEST_URL_ID) & (Event.event_type == "redirect"),
+    ).execute()
 
 
 def test_redirect_urls_path_mlh(client):
@@ -477,6 +498,9 @@ def test_redirect_urls_path_mlh(client):
     rv = client.get(f"/urls/{TEST_SHORT_CODE}/redirect")
     assert rv.status_code == 302
     assert "example.com" in rv.headers["Location"]
+    Event.delete().where(
+        (Event.url_id == TEST_URL_ID) & (Event.event_type == "redirect"),
+    ).execute()
 
 
 def test_redirect_inactive_url_returns_410(client):
@@ -487,6 +511,7 @@ def test_redirect_inactive_url_returns_410(client):
     assert rv.get_json()["error"] == "gone"
     # Reactivate
     client.put(f"/urls/{TEST_URL_ID}", json={"is_active": True})
+    _cleanup_updated_events(TEST_URL_ID)
 
 
 def test_redirect_unknown_code_returns_404(client):
@@ -502,8 +527,6 @@ def test_redirect_too_long_code_returns_404(client):
 
 def test_redirect_creates_event(client):
     """The Unseen Observer: every successful redirect auto-creates a 'redirect' event."""
-    from app.models import Event
-
     before = Event.select().where(
         Event.url_id == TEST_URL_ID,
         Event.event_type == "redirect",
@@ -524,10 +547,26 @@ def test_redirect_creates_event(client):
     ).execute()
 
 
+def test_redirect_event_details_match_seed_shape(client):
+    """Redirect analytics use short_code + original_url in details (PE/events.csv shape)."""
+    client.get(f"/s/{TEST_SHORT_CODE}")
+    row = (
+        Event.select()
+        .where((Event.url_id == TEST_URL_ID) & (Event.event_type == "redirect"))
+        .order_by(Event.id.desc())
+        .get()
+    )
+    d = json.loads(row.details)
+    assert d["short_code"] == TEST_SHORT_CODE
+    assert d["original_url"] == "https://example.com/original"
+    Event.delete().where(
+        Event.url_id == TEST_URL_ID,
+        Event.event_type == "redirect",
+    ).execute()
+
+
 def test_redirect_via_urls_path_creates_event(client):
     """The Unseen Observer: /urls/<code>/redirect also auto-creates a redirect event."""
-    from app.models import Event
-
     before = Event.select().where(
         Event.url_id == TEST_URL_ID,
         Event.event_type == "redirect",
@@ -549,8 +588,6 @@ def test_redirect_via_urls_path_creates_event(client):
 
 def test_redirect_inactive_creates_no_event(client):
     """The Slumbering Guide: inactive URL redirect (410) must NOT create an event."""
-    from app.models import Event
-
     client.put(f"/urls/{TEST_URL_ID}", json={"is_active": False})
     before = Event.select().where(Event.url_id == TEST_URL_ID).count()
 
@@ -561,3 +598,4 @@ def test_redirect_inactive_creates_no_event(client):
     assert after == before, "Inactive redirect must not create an event"
 
     client.put(f"/urls/{TEST_URL_ID}", json={"is_active": True})
+    _cleanup_updated_events(TEST_URL_ID)
