@@ -32,3 +32,62 @@
 {"asctime": "2026-04-05 16:07:24,022", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
 {"asctime": "2026-04-05 16:07:27,292", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
 {"asctime": "2026-04-05 16:07:27,351", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:08:39,315", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:08:39,319", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users", "status": 200}
+{"asctime": "2026-04-05 16:11:30,148", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:11:30,220", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:11:50,059", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:11:50,137", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:13:29,271", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:13:29,323", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/health", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,323", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/health", "status": 200}
+{"asctime": "2026-04-05 16:13:29,342", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,344", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users", "status": 200}
+{"asctime": "2026-04-05 16:13:29,361", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,362", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users", "status": 200}
+{"asctime": "2026-04-05 16:13:29,375", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users/1", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,376", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users/1", "status": 200}
+{"asctime": "2026-04-05 16:13:29,391", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users/99999", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,392", "levelname": "WARNING", "name": "app", "message": "not_found", "path": "/users/99999"}
+{"asctime": "2026-04-05 16:13:29,392", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users/99999", "status": 404}
+{"asctime": "2026-04-05 16:13:29,407", "levelname": "INFO", "name": "app", "message": "request", "method": "POST", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,409", "levelname": "INFO", "name": "app", "message": "response", "method": "POST", "path": "/users", "status": 201}
+{"asctime": "2026-04-05 16:13:29,424", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,426", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:13:29,440", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,441", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:13:29,456", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,458", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:13:29,472", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:13:29,473", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:13:29,486", "levelname": "INFO", "name": "app", "message": "request", "method": "POST", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:10,590", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:14:10,658", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:14:37,300", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:14:37,348", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/health", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,348", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/health", "status": 200}
+{"asctime": "2026-04-05 16:14:37,366", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,372", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users", "status": 200}
+{"asctime": "2026-04-05 16:14:37,446", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,449", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users", "status": 200}
+{"asctime": "2026-04-05 16:14:37,473", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users/1", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,475", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users/1", "status": 200}
+{"asctime": "2026-04-05 16:14:37,489", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users/99999", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,489", "levelname": "WARNING", "name": "app", "message": "not_found", "path": "/users/99999"}
+{"asctime": "2026-04-05 16:14:37,490", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users/99999", "status": 404}
+{"asctime": "2026-04-05 16:14:37,502", "levelname": "INFO", "name": "app", "message": "request", "method": "POST", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,504", "levelname": "INFO", "name": "app", "message": "response", "method": "POST", "path": "/users", "status": 201}
+{"asctime": "2026-04-05 16:14:37,515", "levelname": "INFO", "name": "app", "message": "request", "method": "PUT", "path": "/users/1", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,517", "levelname": "INFO", "name": "app", "message": "response", "method": "PUT", "path": "/users/1", "status": 200}
+{"asctime": "2026-04-05 16:14:37,528", "levelname": "INFO", "name": "app", "message": "request", "method": "DELETE", "path": "/users/200", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,531", "levelname": "INFO", "name": "app", "message": "response", "method": "DELETE", "path": "/users/200", "status": 204}
+{"asctime": "2026-04-05 16:14:37,542", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,544", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:14:37,556", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,557", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:14:37,568", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,570", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:14:37,580", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,582", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/events", "status": 200}
+{"asctime": "2026-04-05 16:14:37,592", "levelname": "INFO", "name": "app", "message": "request", "method": "POST", "path": "/events", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:14:37,594", "levelname": "INFO", "name": "app", "message": "response", "method": "POST", "path": "/events", "status": 201}

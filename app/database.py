@@ -42,6 +42,8 @@ def init_db(app):
     database = _postgres_from_env()
     db.initialize(database)
 
+    ensure_tables()
+
     @app.before_request
     def _db_connect():
         db.connect(reuse_if_open=True)

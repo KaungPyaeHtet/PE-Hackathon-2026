@@ -404,7 +404,9 @@ def create_event():
         details = json.dumps(details)
 
     now = datetime.now(timezone.utc).replace(tzinfo=None)
+    next_id = (Event.select(fn.MAX(Event.id)).scalar() or 0) + 1
     row = Event.create(
+        id=next_id,
         url_id=url_id,
         user_id=user_id,
         event_type=event_type,
