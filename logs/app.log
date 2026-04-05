@@ -11,3 +11,24 @@
 {"asctime": "2026-04-05 15:40:39,218", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/notfound-404", "remote_addr": "127.0.0.1"}
 {"asctime": "2026-04-05 15:40:39,218", "levelname": "WARNING", "name": "app", "message": "not_found", "path": "/notfound-404"}
 {"asctime": "2026-04-05 15:40:39,219", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/notfound-404", "status": 404}
+{"asctime": "2026-04-05 16:07:01,838", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:07:01,963", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:07:01,980", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:07:12,992", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/health", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:07:12,993", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/health", "status": 200}
+{"asctime": "2026-04-05 16:07:18,279", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:07:18,281", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users", "status": 200}
+{"asctime": "2026-04-05 16:07:18,307", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:07:18,307", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users", "status": 200}
+{"asctime": "2026-04-05 16:07:18,328", "levelname": "INFO", "name": "app", "message": "request", "method": "GET", "path": "/users/1", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:07:18,329", "levelname": "INFO", "name": "app", "message": "response", "method": "GET", "path": "/users/1", "status": 200}
+{"asctime": "2026-04-05 16:07:18,360", "levelname": "INFO", "name": "app", "message": "request", "method": "POST", "path": "/users", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:07:18,362", "levelname": "INFO", "name": "app", "message": "response", "method": "POST", "path": "/users", "status": 201}
+{"asctime": "2026-04-05 16:07:18,382", "levelname": "INFO", "name": "app", "message": "request", "method": "PUT", "path": "/users/1", "remote_addr": "127.0.0.1"}
+{"asctime": "2026-04-05 16:07:18,383", "levelname": "INFO", "name": "app", "message": "response", "method": "PUT", "path": "/users/1", "status": 200}
+{"asctime": "2026-04-05 16:07:21,772", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:07:21,796", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:07:24,003", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:07:24,022", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}
+{"asctime": "2026-04-05 16:07:27,292", "levelname": "INFO", "name": "app", "message": "Starting mlh-pe-hackathon service"}
+{"asctime": "2026-04-05 16:07:27,351", "levelname": "WARNING", "name": "werkzeug", "message": " * Debugger is active!"}

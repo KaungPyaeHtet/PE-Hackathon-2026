@@ -29,6 +29,15 @@ def connect_db_cli():
     return db
 
 
+def ensure_tables() -> None:
+    """Create tables if they are missing (fresh Postgres in CI / MLH grader)."""
+    from app.models import Event, Url, User
+
+    if db.is_closed():
+        db.connect(reuse_if_open=True)
+    db.create_tables([User, Url, Event], safe=True)
+
+
 def init_db(app):
     database = _postgres_from_env()
     db.initialize(database)

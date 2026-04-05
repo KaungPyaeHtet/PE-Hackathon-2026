@@ -5,7 +5,7 @@ import psutil
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 
-from app.database import db, init_db
+from app.database import db, ensure_tables, init_db
 from app.logging_config import LOG_FILE, setup_logging
 from app.routes import register_routes
 
@@ -23,6 +23,8 @@ def create_app():
     init_db(app)
 
     from app import models  # noqa: F401 - registers models with Peewee
+
+    ensure_tables()
 
     register_routes(app)
 
